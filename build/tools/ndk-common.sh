@@ -377,11 +377,12 @@ test $HOST_NUM_CPUS -lt 1 && HOST_NUM_CPUS=1
 #log "HOST_NUM_CPUS=$HOST_NUM_CPUS"
 
 # If BUILD_NUM_CPUS is not already defined in your environment,
-# define it as the double of HOST_NUM_CPUS. This is used to
-# run Make commands in parralles, as in 'make -j$BUILD_NUM_CPUS'
+# define it to be the same as HOST_NUM_CPUS (Chaquopy edited:
+# used to be double). This is used to run Make commands in
+# parallel, as in 'make -j$BUILD_NUM_CPUS'
 #
 if [ -z "$BUILD_NUM_CPUS" ] ; then
-    BUILD_NUM_CPUS=`expr $HOST_NUM_CPUS \* 2`
+    BUILD_NUM_CPUS=$HOST_NUM_CPUS
 fi
 
 #log "BUILD_NUM_CPUS=$BUILD_NUM_CPUS"

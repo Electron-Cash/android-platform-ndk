@@ -379,12 +379,10 @@ register_canadian_option ()
     fi
 }
 
-TRY64=no
-do_try64_option () { TRY64=yes; }
-
+TRY64=yes  # Chaquopy changed from no to yes
 register_try64_option ()
 {
-    register_option "--try-64" do_try64_option "Generate 64-bit only binaries."
+    register_var_option "--try-64" TRY64 "Generate 64-bit only binaries"
 }
 
 

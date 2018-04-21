@@ -86,7 +86,7 @@ register_var_option "--with-python=<path/to/python-config.sh>" WITH_PYTHON "Spec
 PACKAGE_DIR=
 register_var_option "--package-dir=<path>" PACKAGE_DIR "Create archive tarball in specific directory"
 
-ENABLE_LANGUAGES="c,c++,objc,obj-c++"
+ENABLE_LANGUAGES="c,c++,fortran"  # Chaquopy: added Fortran, removed Objective-C
 register_var_option "--enable-languages=<name>" ENABLE_LANGUAGES "Experimental: specify which languages to build"
 
 register_jobs_option
@@ -232,6 +232,10 @@ if [ ! -z "$WITH_PYTHON" ] ; then
     else
         WITH_PYTHON="--with-python=$WITH_PYTHON_SCRIPT"
     fi
+else
+    # Chaquopy: added this default, otherwise the default would be not to pass --with-python at
+    # all, and the GDB configure script would auto-detect the system Python.
+    WITH_PYTHON="--with-python=no"
 fi
 
 fix_option MPFR_VERSION "$OPTION_MPFR_VERSION" "mpfr version"
@@ -723,11 +727,13 @@ if [ -f "$SRC_DIR/SOURCES" ]; then
     cp "$SRC_DIR/SOURCES" "$TOOLCHAIN_PATH/SOURCES"
 fi
 
-# check GLIBC/GLBICXX symbols
-if [ "$HOST_OS" = "linux" ]; then
-    SUBDIR=$(get_toolchain_install_subdir $TOOLCHAIN $HOST_TAG)
-    $ANDROID_NDK_ROOT/build/tools/check-glibc.sh $NDK_DIR/$SUBDIR
-fi
+# Chaquopy disabled: this is only relevant if distributing the toolchain, as opposed to running
+# it on the build machine or a similar machine.
+# # check GLIBC/GLBICXX symbols
+# if [ "$HOST_OS" = "linux" ]; then
+#     SUBDIR=$(get_toolchain_install_subdir $TOOLCHAIN $HOST_TAG)
+#     $ANDROID_NDK_ROOT/build/tools/check-glibc.sh $NDK_DIR/$SUBDIR
+# fi
 
 if [ "$PACKAGE_DIR" ]; then
     assert_cache_host_tag

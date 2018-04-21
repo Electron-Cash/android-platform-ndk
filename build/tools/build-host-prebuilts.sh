@@ -252,37 +252,37 @@ for SYSTEM in $SYSTEMS; do
         esac
     fi
 
-    # First, ndk-stack
-    echo "Building $SYSNAME ndk-stack"
-    run $BUILDTOOLS/build-ndk-stack.sh $TOOLCHAIN_FLAGS --src-dir=$SRC_DIR
-    fail_panic "ndk-stack build failure!"
+    # Chaquopy disabled next few paragraphs
+    # echo "Building $SYSNAME ndk-stack"
+    # run $BUILDTOOLS/build-ndk-stack.sh $TOOLCHAIN_FLAGS --src-dir=$SRC_DIR
+    # fail_panic "ndk-stack build failure!"
 
-    echo "Building $SYSNAME ndk-depends"
-    run $BUILDTOOLS/build-ndk-stack.sh $TOOLCHAIN_FLAGS --src-dir=$SRC_DIR --program-name=ndk-depends
-    fail_panic "ndk-depends build failure!"
-    fail_panic "ndk-stack build failure!"
+    # echo "Building $SYSNAME ndk-depends"
+    # run $BUILDTOOLS/build-ndk-stack.sh $TOOLCHAIN_FLAGS --src-dir=$SRC_DIR --program-name=ndk-depends
+    # fail_panic "ndk-depends build failure!"
+    # fail_panic "ndk-stack build failure!"
 
-    echo "Building $SYSNAME ndk-make"
-    run $BUILDTOOLS/build-host-make.sh $TOOLCHAIN_FLAGS
-    fail_panic "make build failure!"
+    # echo "Building $SYSNAME ndk-make"
+    # run $BUILDTOOLS/build-host-make.sh $TOOLCHAIN_FLAGS
+    # fail_panic "make build failure!"
 
-    echo "Building $SYSNAME ndk-awk"
-    run $BUILDTOOLS/build-host-awk.sh $TOOLCHAIN_FLAGS
-    fail_panic "awk build failure!"
+    # echo "Building $SYSNAME ndk-awk"
+    # run $BUILDTOOLS/build-host-awk.sh $TOOLCHAIN_FLAGS
+    # fail_panic "awk build failure!"
 
-    echo "Building $SYSNAME ndk-python"
-    run $BUILDTOOLS/build-host-python.sh $TOOLCHAIN_FLAGS "--toolchain-src-dir=$SRC_DIR" "--systems=$SYSTEM" "--force"
-    fail_panic "python build failure!"
+    # echo "Building $SYSNAME ndk-python"
+    # run $BUILDTOOLS/build-host-python.sh $TOOLCHAIN_FLAGS "--toolchain-src-dir=$SRC_DIR" "--systems=$SYSTEM" "--force"
+    # fail_panic "python build failure!"
 
-    echo "Building $SYSNAME ndk-yasm"
-    run $BUILDTOOLS/build-host-yasm.sh "$SRC_DIR" "$NDK_DIR" $TOOLCHAIN_FLAGS
-    fail_panic "yasm build failure!"
+    # echo "Building $SYSNAME ndk-yasm"
+    # run $BUILDTOOLS/build-host-yasm.sh "$SRC_DIR" "$NDK_DIR" $TOOLCHAIN_FLAGS
+    # fail_panic "yasm build failure!"
 
-    if [ "$SYSTEM" = "windows" ]; then
-        echo "Building $SYSNAME toolbox"
-        run $BUILDTOOLS/build-host-toolbox.sh $FLAGS
-        fail_panic "Windows toolbox build failure!"
-    fi
+    # if [ "$SYSTEM" = "windows" ]; then
+    #     echo "Building $SYSNAME toolbox"
+    #     run $BUILDTOOLS/build-host-toolbox.sh $FLAGS
+    #     fail_panic "Windows toolbox build failure!"
+    # fi
 
     # Then the toolchains
     for ARCH in $ARCHS; do
@@ -299,35 +299,38 @@ for SYSTEM in $SYSTEMS; do
 
         for TOOLCHAIN_NAME in $TOOLCHAIN_NAMES; do
             echo "Building $SYSNAME toolchain for $ARCH architecture: $TOOLCHAIN_NAME"
-            run $BUILDTOOLS/build-gcc.sh "$SRC_DIR" "$NDK_DIR" $TOOLCHAIN_NAME $TOOLCHAIN_FLAGS --with-python=prebuilt -j$BUILD_NUM_CPUS
+            # Chaquopy: removed `--with-python=prebuilt` to avoid having to build host Python
+            # as well. To help diagnose problems, also added --build-out to build different
+            # architectures in different build directories (this also prevents build-gcc.sh
+            # from deleting the build directory if it succeeds).
+            run $BUILDTOOLS/build-gcc.sh "$SRC_DIR" "$NDK_DIR" $TOOLCHAIN_NAME $TOOLCHAIN_FLAGS \
+                -j$BUILD_NUM_CPUS --build-out="$TMPDIR/build/toolchain-$ARCH"
             fail_panic "Could not build $TOOLCHAIN_NAME-$SYSNAME!"
         done
     done
 
-    # Build llvm and clang
-    POLLY_FLAGS=
-    if [ "$TRY64" != "yes" -a "$SYSTEM" != "windows" ]; then
-        POLLY_FLAGS="--with-polly"
-    fi
-    for LLVM_VERSION in $LLVM_VERSION_LIST; do
-        echo "Building $SYSNAME clang/llvm-$LLVM_VERSION"
-        run $BUILDTOOLS/build-llvm.sh "$SRC_DIR" "$NDK_DIR" "llvm-$LLVM_VERSION" $TOOLCHAIN_FLAGS $POLLY_FLAGS $CHECK_FLAG -j$BUILD_NUM_CPUS
-        fail_panic "Could not build llvm for $SYSNAME"
-    done
-
-    # Cleanup prebuilt libraries after building vendor utils
-    # todo: zuav: what's the reason?
-    #find $NDK_DIR/prebuilt/$HOST_TAG/lib -name 'lib*.a' -a -not -name 'libpython*.a' -delete
+    # Chaquopy disabled
+    # # Build llvm and clang
+    # POLLY_FLAGS=
+    # if [ "$TRY64" != "yes" -a "$SYSTEM" != "windows" ]; then
+    #     POLLY_FLAGS="--with-polly"
+    # fi
+    # for LLVM_VERSION in $LLVM_VERSION_LIST; do
+    #     echo "Building $SYSNAME clang/llvm-$LLVM_VERSION"
+    #     run $BUILDTOOLS/build-llvm.sh "$SRC_DIR" "$NDK_DIR" "llvm-$LLVM_VERSION" $TOOLCHAIN_FLAGS $POLLY_FLAGS $CHECK_FLAG -j$BUILD_NUM_CPUS
+    #     fail_panic "Could not build llvm for $SYSNAME"
+    # done
 
     # We're done for this system
 done
 
-run $BUILDTOOLS/build-renderscript.sh --systems="$SYSTEMS" $FLAGS
-fail_panic "Could not build RenderScript binaries!"
+# Chaquopy disabled next few paragraphs
+# run $BUILDTOOLS/build-renderscript.sh --systems="$SYSTEMS" $FLAGS
+# fail_panic "Could not build RenderScript binaries!"
 
-# Build tools common to all system
-run $BUILDTOOLS/build-analyzer.sh "$SRC_DIR" "$NDK_DIR" "llvm-$DEFAULT_LLVM_VERSION" --package-dir="$PACKAGE_DIR"
-fail_panic "Could not build analyzer!"
+# # Build tools common to all system
+# run $BUILDTOOLS/build-analyzer.sh "$SRC_DIR" "$NDK_DIR" "llvm-$DEFAULT_LLVM_VERSION" --package-dir="$PACKAGE_DIR"
+# fail_panic "Could not build analyzer!"
 
 if [ "$PACKAGE_DIR" ]; then
     echo "Done, please look at $PACKAGE_DIR"

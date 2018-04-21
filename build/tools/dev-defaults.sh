@@ -96,7 +96,7 @@ SUPPORT_SUBDIR=sources/android/support
 TOOLCHAIN_GIT_DATE=now
 
 # The space-separated list of all GCC versions we support in this NDK
-DEFAULT_GCC_VERSION_LIST="4.9 5"
+DEFAULT_GCC_VERSION_LIST="4.9"  # Chaquopy removed 5
 
 DEFAULT_GCC_VERSION=$(echo $DEFAULT_GCC_VERSION_LIST | tr ' ' '\n' | head -n 1)
 
