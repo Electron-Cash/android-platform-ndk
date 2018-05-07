@@ -3,54 +3,37 @@ import os.path
 import zipfile
 
 
-IGNORE_DIR = (
-    'site-packages',
-    'curses',
-    'dbm',
-    'distutils',
-    'idlelib',
-    'lib2to3',
-    'msilib',
-    'pydoc_data',
-    'tkinter',
-    'turtledemo',
-    'venv',
-    'ensurepip',
+# Chaquopy: We omit things which are either non-importable, or both large and unnecessary.
+# Don't omit importable things just because they're useless: user code may import things
+# unconditionally and then use them conditionally.
+IGNORE_PATHS = [
+    # Replaced by our own copies below.
+    'site.py',
+    'sysconfig.py',
 
-# 2.7 specific
-    'bsddb',
-    'lib-tk'
-)
+    # Not used in our setup.
+    'site-packages/',
 
-IGNORE_FILE = (
-   'site.py',
-   'sysconfig.py',
-   'doctest.py',
-   'turtle.py',
-   'tabnanny.py',
-   'this.py',
-   '__phello__.foo.py',
-   '_osx_support.py',
-   'asyncio/test_utils.py',
+    # Depends on Tk, which we don't build.
+    'idlelib/',
+    'lib-tk/',      # 2.x only
+    'tkinter/',     # 3.x only
+    'turtle.py',    # 3.x only
+    'turtledemo/',  # 3.x only
 
-# 2.7 specific
-   'anydbm.py',
-   'user.py',
-   'whichdb.py',
-)
+    # Depends on other native modules which we don't build.
+    'anydbm.py',    # 2.x only
+    'bsddb/',       # 2.x only
+    'curses/',
+    'dbm/',         # 3.x only
+    'msilib/',
+    'whichdb.py',   # 2.x only
 
-
-def dir_in_interest(arch_path):
-    for exclusion in IGNORE_DIR:
-        if arch_path == exclusion:
-            return False
-    return True
-
-
-def file_in_interest(fs_path, arch_path):
-    if arch_path in IGNORE_FILE:
-        return False
-    return True
+    # Large and unnecessary. (All `test` and `tests` directories are automatically ignored
+    # below, so no need to list them here.)
+    'ensurepip/',
+    'pydoc_data/',
+]
 
 
 def in_interest(fs_path, arch_path, is_dir, pathbits):
@@ -63,10 +46,7 @@ def in_interest(fs_path, arch_path, is_dir, pathbits):
     else:
         if not arch_path.endswith('.py'):
             return False
-    if is_dir:
-        return dir_in_interest(arch_path)
-    else:
-        return file_in_interest(fs_path, arch_path)
+    return not any(arch_path.startswith(exclusion) for exclusion in IGNORE_PATHS)
 
 
 def enum_content(seed, catalog, pathbits = None):

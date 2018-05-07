@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # Copyright (c) 2011-2015 CrystaX.
 # All rights reserved.
 #
@@ -152,7 +152,18 @@ build_python_for_abi ()
     if [ -n "$OPENSSL_HOME" ]; then
         log "Building python$PYTHON_ABI for $ABI (with OpenSSL-$DEFAULT_OPENSSL_VERSION)"
     else
-        log "Building python$PYTHON_ABI for $ABI (without OpenSSL support)"
+        # Chaquopy: OpenSSL is required.
+        fail_panic "OpenSSL $DEFAULT_OPENSSL_VERSION not found"
+    fi
+
+# Chaquopy added
+    run mkdir -p $BUILDDIR
+    PATCH_FILE="$PYTHON_BUILD_UTILS_DIR/$PYTHON_ABI.patch"
+    if [ -f "$PATCH_FILE" ]; then
+        local BUILDDIR_SRC="$BUILDDIR/src"
+        run cp -a $PYTHON_SRCDIR $BUILDDIR_SRC
+        run patch -p1 -i $PATCH_FILE -d $BUILDDIR_SRC
+        PYTHON_SRCDIR=$BUILDDIR_SRC
     fi
 
 # Step 1: configure
@@ -402,6 +413,7 @@ build_python_for_abi ()
     run cp -p $PYCONFIG_FOR_ABI $PYTHON_DSTDIR/include/python
     fail_panic "Can't install $PYCONFIG_FOR_ABI"
 
+    run rm -Rf $PYBIN_INSTALLDIR
     run mkdir -p $PYBIN_INSTALLDIR
     fail_panic "Can't create $PYBIN_INSTALLDIR"
     run mkdir -p $PYBIN_INSTALLDIR_MODULES
@@ -452,7 +464,7 @@ build_python_for_abi ()
     local SITE_README_SRCDIR="$PYTHON_SRCDIR/Lib/site-packages"
     local SITE_README_DSTDIR="$PYBIN_INSTALLDIR/site-packages"
     log "Install python$PYTHON_ABI-$ABI site-packages"
-    run mkdir -p $SITE_README_DSTDIR && cp -fpH $SITE_README_SRCDIR/README $SITE_README_DSTDIR
+    run mkdir -p $SITE_README_DSTDIR && cp -fpH $SITE_README_SRCDIR/README* $SITE_README_DSTDIR
     fail_panic "Can't install python$PYTHON_ABI-$ABI site-packages"
 
 # Step 6: build python modules
@@ -688,7 +700,7 @@ build_python_for_abi ()
         echo 'LOCAL_PATH := $(call my-dir)'
         echo 'include $(CLEAR_VARS)'
         echo 'LOCAL_MODULE := pyexpat'
-        echo 'LOCAL_CFLAGS := -DHAVE_EXPAT_CONFIG_H -DXML_STATIC'
+        echo 'LOCAL_CFLAGS := -DHAVE_EXPAT_CONFIG_H -DXML_STATIC -DXML_DEV_URANDOM'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
         echo "LOCAL_C_INCLUDES := \$(MY_PYTHON_SRC_ROOT)/Modules/expat"
         echo 'LOCAL_SRC_FILES := \'
