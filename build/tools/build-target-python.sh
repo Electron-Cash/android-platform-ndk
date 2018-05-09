@@ -82,6 +82,9 @@ $(cat $PYTHON_SRCDIR/Include/patchlevel.h | sed -n 's/#define[ \t]*PY_MAJOR_VERS
 PYTHON_MINOR_VERSION=\
 $(cat $PYTHON_SRCDIR/Include/patchlevel.h | sed -n 's/#define[ \t]*PY_MINOR_VERSION[ \t]*\([0-9]*\).*/\1/p')
 
+PYTHON_MICRO_VERSION=\
+$(cat $PYTHON_SRCDIR/Include/patchlevel.h | sed -n 's/#define[ \t]*PY_MICRO_VERSION[ \t]*\([0-9]*\).*/\1/p')
+
 if [ -z "$PYTHON_MAJOR_VERSION" ]; then
     echo "ERROR: Can't detect python major version." 1>&2
     exit 1
@@ -92,6 +95,12 @@ if [ -z "$PYTHON_MINOR_VERSION" ]; then
     exit 1
 fi
 
+if [ -z "$PYTHON_MICRO_VERSION" ]; then
+    echo "ERROR: Can't detect python micro version." 1>&2
+    exit 1
+fi
+
+PYTHON_VERSION="$PYTHON_MAJOR_VERSION"'.'"$PYTHON_MINOR_VERSION"'.'"$PYTHON_MICRO_VERSION"
 PYTHON_ABI="$PYTHON_MAJOR_VERSION"'.'"$PYTHON_MINOR_VERSION"
 PYTHON_DSTDIR=$NDK_DIR/$PYTHON_SUBDIR/$PYTHON_ABI
 mkdir -p $PYTHON_DSTDIR
@@ -160,10 +169,12 @@ build_python_for_abi ()
     run mkdir -p $BUILDDIR
     PATCH_FILE="$PYTHON_BUILD_UTILS_DIR/$PYTHON_ABI.patch"
     if [ -f "$PATCH_FILE" ]; then
-        local BUILDDIR_SRC="$BUILDDIR/src"
-        run cp -a $PYTHON_SRCDIR $BUILDDIR_SRC
-        run patch -p1 -i $PATCH_FILE -d $BUILDDIR_SRC
-        PYTHON_SRCDIR=$BUILDDIR_SRC
+        if [ -z "$PYTHON_SRCDIR_ORIGINAL" ]; then
+            PYTHON_SRCDIR_ORIGINAL=$PYTHON_SRCDIR
+        fi
+        PYTHON_SRCDIR="$BUILDDIR/src"
+        run cp -a $PYTHON_SRCDIR_ORIGINAL $PYTHON_SRCDIR
+        run patch -p1 -i $PATCH_FILE -d $PYTHON_SRCDIR
     fi
 
 # Step 1: configure
@@ -296,7 +307,7 @@ build_python_for_abi ()
     local AR=$TCPREFIX/bin/${HOST}-ar
     local RANLIB=$TCPREFIX/bin/${HOST}-ranlib
     local READELF=$TCPREFIX/bin/${HOST}-readelf
-    local PYTHON_FOR_BUILD=$NDK_DIR/prebuilt/$HOST_TAG/bin/python
+    local PYTHON_FOR_BUILD="python${PYTHON_ABI}"  # Chaquopy: build_stdlib will import lib2to3.
     local CONFIG_SITE=$PYTHON_TOOLS_DIR/config.site
 
     local CONFIG_SITE=$BUILDDIR_CONFIG/config.site
@@ -452,13 +463,8 @@ build_python_for_abi ()
 # Step 4: build python stdlib
     local PYSTDLIB_ZIPFILE="$PYBIN_INSTALLDIR/stdlib.zip"
     log "Install python$PYTHON_ABI-$ABI stdlib as $PYSTDLIB_ZIPFILE"
-    if [ "$PYTHON_MAJOR_VERSION" = "2" ]; then
-        run $PYTHON_FOR_BUILD $PYTHON_BUILD_UTILS_DIR/build_stdlib.py --py2 --pysrc-root $PYTHON_SRCDIR --output-zip $PYSTDLIB_ZIPFILE
-        fail_panic "Can't install python$PYTHON_ABI-$ABI stdlib"
-    else
-        run $PYTHON_FOR_BUILD $PYTHON_BUILD_UTILS_DIR/build_stdlib.py --pysrc-root $PYTHON_SRCDIR --output-zip $PYSTDLIB_ZIPFILE
-        fail_panic "Can't install python$PYTHON_ABI-$ABI stdlib"
-    fi
+    run $PYTHON_FOR_BUILD $PYTHON_BUILD_UTILS_DIR/build_stdlib.py --version $PYTHON_VERSION --pysrc-root $PYTHON_SRCDIR --output-zip $PYSTDLIB_ZIPFILE
+    fail_panic "Can't install python$PYTHON_ABI-$ABI stdlib"
 
 # Step 5: site-packages
     local SITE_README_SRCDIR="$PYTHON_SRCDIR/Lib/site-packages"

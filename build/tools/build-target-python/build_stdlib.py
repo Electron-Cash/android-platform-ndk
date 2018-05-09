@@ -1,4 +1,7 @@
+from __future__ import absolute_import, division, print_function
+
 import argparse
+from lib2to3.pgen2.driver import load_grammar
 import os.path
 import zipfile
 
@@ -44,7 +47,7 @@ def in_interest(fs_path, arch_path, is_dir, pathbits):
         if arch_path.startswith('plat-'):
             return False
     else:
-        if not arch_path.endswith('.py'):
+        if not os.path.splitext(arch_path)[1] in [".py", ".pickle"]:
             return False
     return not any(arch_path.startswith(exclusion) for exclusion in IGNORE_PATHS)
 
@@ -87,13 +90,18 @@ def build_stdlib():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pysrc-root', required=True)
     parser.add_argument('--output-zip', required=True)
-    parser.add_argument('--py2', action='store_true')
+    parser.add_argument('--version', required=True)
     args = parser.parse_args()
 
     dirhere = os.path.normpath(os.path.abspath(os.path.dirname(__file__)))
     stdlib_srcdir = os.path.normpath(os.path.abspath(os.path.join(args.pysrc_root, 'Lib')))
     zipfilename = os.path.normpath(os.path.abspath(args.output_zip))
     display_zipname = os.path.basename(zipfilename)
+
+    for grammar_stem in ["Grammar", "PatternGrammar"]:
+        grammar_txt = os.path.join(stdlib_srcdir, "lib2to3/{}.txt".format(grammar_stem))
+        grammar_pickle = grammar_txt.replace(".txt", "{}.final.0.pickle".format(args.version))
+        load_grammar(grammar_txt).dump(grammar_pickle)
 
     catalog = []
     enum_content(stdlib_srcdir, catalog)
@@ -102,7 +110,7 @@ def build_stdlib():
         (os.path.join(dirhere, 'sysconfig.py'), 'sysconfig.py'),
         (os.path.join(dirhere, '_sysconfigdata.py'), '_sysconfigdata.py'),
     ]
-    if args.py2:
+    if args.version.startswith("2."):
         catalog += [(os.path.join(dirhere, '_sitebuiltins.py'), '_sitebuiltins.py')]
 
     print("::: compiling python-stdlib zip package '{0}' ...".format(zipfilename))
