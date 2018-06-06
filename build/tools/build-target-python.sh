@@ -628,34 +628,42 @@ build_python_for_abi ()
     run cp -p -T $OBJDIR_SOCKET/lib_socket.so $PYBIN_INSTALLDIR_MODULES/_socket.so
     fail_panic "Can't install python$PYTHON_ABI-$ABI module '_socket' in $PYBIN_INSTALLDIR_MODULES"
 
-#_ssl
+#_hashlib and _ssl
     if [ -n "$OPENSSL_HOME" ]; then
-        local BUILDDIR_SSL="$BUILDDIR/ssl"
-        local OBJDIR_SSL="$BUILDDIR_SSL/obj/local/$ABI"
+        for mod_name in hashlib ssl; do
+            local BUILDDIR_SSL="$BUILDDIR/${mod_name}"
+            local OBJDIR_SSL="$BUILDDIR_SSL/obj/local/$ABI"
 
-        run mkdir -p "$BUILDDIR_SSL/jni"
-        fail_panic "Can't create directory: $BUILDDIR_SSL/jni"
+            run mkdir -p "$BUILDDIR_SSL/jni"
+            fail_panic "Can't create directory: $BUILDDIR_SSL/jni"
 
-        {
-            echo 'LOCAL_PATH := $(call my-dir)'
-            echo 'include $(CLEAR_VARS)'
-            echo 'LOCAL_MODULE := _ssl'
-            echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
-            echo 'LOCAL_SRC_FILES := \'
-            echo '  $(MY_PYTHON_SRC_ROOT)/Modules/_ssl.c'
-            echo 'LOCAL_SHARED_LIBRARIES := python_shared openssl_shared opencrypto_shared'
-            echo 'include $(BUILD_SHARED_LIBRARY)'
-            echo "\$(call import-module,python/$PYTHON_ABI)"
-            echo "\$(call import-module,$OPENSSL_HOME)"
-        } >$BUILDDIR_SSL/jni/Android.mk
-        fail_panic "Can't generate $BUILDDIR_SSL/jni/Android.mk"
+            if [ "$mod_name" = "hashlib" ]; then
+                local src_filename="_hashopenssl.c"
+            else
+                local src_filename="_${mod_name}.c"
+            fi
 
-        run $NDK_DIR/ndk-build -C $BUILDDIR_SSL -j$NUM_JOBS APP_ABI=$ABI V=1
-        fail_panic "Can't build python$PYTHON_ABI-$ABI module '_ssl'"
+            {
+                echo 'LOCAL_PATH := $(call my-dir)'
+                echo 'include $(CLEAR_VARS)'
+                echo 'LOCAL_MODULE := _'$mod_name
+                echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+                echo 'LOCAL_SRC_FILES := \'
+                echo '  $(MY_PYTHON_SRC_ROOT)/Modules/'$src_filename
+                echo 'LOCAL_SHARED_LIBRARIES := python_shared openssl_shared opencrypto_shared'
+                echo 'include $(BUILD_SHARED_LIBRARY)'
+                echo "\$(call import-module,python/$PYTHON_ABI)"
+                echo "\$(call import-module,$OPENSSL_HOME)"
+            } >$BUILDDIR_SSL/jni/Android.mk
+            fail_panic "Can't generate $BUILDDIR_SSL/jni/Android.mk"
 
-        log "Install python$PYTHON_ABI-$ABI module '_ssl' in $PYBIN_INSTALLDIR_MODULES"
-        run cp -p -T $OBJDIR_SSL/lib_ssl.so $PYBIN_INSTALLDIR_MODULES/_ssl.so
-        fail_panic "Can't install python$PYTHON_ABI-$ABI module '_ssl' in $PYBIN_INSTALLDIR_MODULES"
+            run $NDK_DIR/ndk-build -C $BUILDDIR_SSL -j$NUM_JOBS APP_ABI=$ABI V=1
+            fail_panic "Can't build python$PYTHON_ABI-$ABI module '_${mod_name}'"
+
+            log "Install python$PYTHON_ABI-$ABI module '_${mod_name}' in $PYBIN_INSTALLDIR_MODULES"
+            run cp -p -T $OBJDIR_SSL/lib_$mod_name.so $PYBIN_INSTALLDIR_MODULES/_$mod_name.so
+            fail_panic "Can't install python$PYTHON_ABI-$ABI module '_${mod_name}' in $PYBIN_INSTALLDIR_MODULES"
+        done
     fi
 
 # _sqlite3
