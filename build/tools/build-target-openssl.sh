@@ -394,4 +394,12 @@ build_openssl_for_abi ()
 for ABI in $ABIS; do
     build_openssl_for_abi $ABI "$BUILD_DIR/$ABI"
 done
+
+# Chaquopy: added
+if [ $NDK_DIR != $ANDROID_NDK_ROOT ]; then
+    log "Install Android.mk"
+    run cp -p $NDK_BUILDTOOLS_PATH/../../$OPENSSL_SUBDIR/$DEFAULT_OPENSSL_VERSION/Android.mk $OPENSSL_DSTDIR
+    fail_panic "Can't install Android.mk"
+fi
+
 log "Done!"

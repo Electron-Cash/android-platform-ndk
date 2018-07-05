@@ -434,6 +434,13 @@ build_python_for_abi ()
     run cp -fpH $OBJDIR_CORE/lib$PYTHON_CORE_MODULE_NAME.so $PYBIN_INSTALLDIR
     fail_panic "Can't install python$PYTHON_ABI-$ABI core in $PYBIN_INSTALLDIR"
 
+    # Chaquopy: added
+    if [ $NDK_DIR != $ANDROID_NDK_ROOT ]; then
+	log "Install Android.mk"
+	run cp -p $NDK_BUILDTOOLS_PATH/../../$PYTHON_SUBDIR/$PYTHON_ABI/Android.mk $PYTHON_DSTDIR
+	fail_panic "Can't install Android.mk"
+    fi
+
 # Step 3: build python-interpreter
     local BUILDDIR_INTERPRETER="$BUILDDIR/interpreter"
     local OBJDIR_INTERPRETER="$BUILDDIR_INTERPRETER/obj/local/$ABI"
