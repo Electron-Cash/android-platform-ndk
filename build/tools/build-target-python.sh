@@ -291,7 +291,8 @@ build_python_for_abi ()
             CFLAGS="$CFLAGS -mthumb"
     esac
 
-    local CFLAGS="$CFLAGS --sysroot=$NDK_DIR/platforms/android-$APILEVEL/arch-$ARCH"
+    # Chaquopy: added include directory
+    local CFLAGS="$CFLAGS --sysroot=$NDK_DIR/platforms/android-$APILEVEL/arch-$ARCH -I $PYTHON_BUILD_UTILS_DIR/include"
 
     local LDFLAGS=""
     if [ "$ABI" = "armeabi-v7a-hard" ]; then
