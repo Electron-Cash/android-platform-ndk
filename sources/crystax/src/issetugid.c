@@ -32,5 +32,7 @@
 
 int issetugid()
 {
-    PANIC("issetugid() not implemented!!!");
+    /* Chaquopy: still not implemented, but removed call to PANIC
+     * (https://tracker.crystax.net/issues/1360). */
+    return 0;
 }
