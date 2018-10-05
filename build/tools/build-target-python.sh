@@ -175,6 +175,7 @@ build_python_for_abi ()
         PYTHON_SRCDIR="$BUILDDIR/src"
         run cp -a $PYTHON_SRCDIR_ORIGINAL $PYTHON_SRCDIR
         run patch -p1 -i $PATCH_FILE -d $PYTHON_SRCDIR
+        fail_panic "Can't patch Python source"
     fi
 
 # Step 1: configure
