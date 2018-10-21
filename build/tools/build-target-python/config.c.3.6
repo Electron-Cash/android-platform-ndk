@@ -62,6 +62,9 @@ extern PyObject* PyInit__opcode(void);
 extern PyObject* PyMarshal_Init(void);
 extern PyObject* PyInit_imp(void);
 
+/* Chaquopy added */
+extern PyObject* PyInit_resource(void);
+
 struct _inittab _PyImport_Inittab[] = {
     {"posix", PyInit_posix},
     {"pwd", PyInit_pwd},
@@ -135,6 +138,9 @@ struct _inittab _PyImport_Inittab[] = {
     {"atexit", PyInit_atexit},
     {"_stat", PyInit__stat},
     {"_opcode", PyInit__opcode},
+
+    /* Chaquopy added */
+    {"resource", PyInit_resource},
 
     /* Sentinel */
     {0, 0}

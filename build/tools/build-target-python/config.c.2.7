@@ -62,6 +62,9 @@ extern void _PyWarnings_Init(void);
 extern void PyMarshal_Init(void);
 extern void initimp(void);
 
+/* Chaquopy added */
+extern PyObject* initresource(void);
+
 struct _inittab _PyImport_Inittab[] = {
     {"posix", initposix},
     {"pwd", initpwd},
@@ -133,6 +136,9 @@ struct _inittab _PyImport_Inittab[] = {
     {"_warnings", _PyWarnings_Init},
 
     {"_io", init_io},
+
+    /* Chaquopy added */
+    {"resource", initresource},
 
     /* Sentinel */
     {0, 0}

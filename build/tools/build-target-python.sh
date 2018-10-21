@@ -175,6 +175,7 @@ build_python_for_abi ()
         PYTHON_SRCDIR="$BUILDDIR/src"
         run cp -a $PYTHON_SRCDIR_ORIGINAL $PYTHON_SRCDIR
         run patch -p1 -i $PATCH_FILE -d $PYTHON_SRCDIR
+        fail_panic "Can't patch Python source"
     fi
 
 # Step 1: configure
@@ -291,7 +292,8 @@ build_python_for_abi ()
             CFLAGS="$CFLAGS -mthumb"
     esac
 
-    local CFLAGS="$CFLAGS --sysroot=$NDK_DIR/platforms/android-$APILEVEL/arch-$ARCH"
+    # Chaquopy: added include directory
+    local CFLAGS="$CFLAGS --sysroot=$NDK_DIR/platforms/android-$APILEVEL/arch-$ARCH -I $PYTHON_BUILD_UTILS_DIR/include"
 
     local LDFLAGS=""
     if [ "$ABI" = "armeabi-v7a-hard" ]; then

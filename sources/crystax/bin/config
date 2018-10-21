@@ -361,6 +361,15 @@ common_cflags_for_abi()
     echo "-ffunction-sections -fdata-sections"
     echo "-fdiagnostics-show-option"
 
+    # Chaquopy: cherry-pick Crystax commit 8f82c4430c520455366c2da33d327848d6138666 (Crystax
+    # issue #1369)
+    #
+    # This is to workaround GCC "(long)fn -> lfn" optimization bug.
+    # See https://android-review.googlesource.com/#/c/96345/ for details.
+    echo "-fno-builtin-rint"
+    echo "-fno-builtin-rintf"
+    echo "-fno-builtin-rintl"
+
     echo "-Wall -Wextra"
     echo "-Werror"
     if   [ ${TOOLCHAIN##gcc}   != ${TOOLCHAIN} ]; then
