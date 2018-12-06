@@ -399,18 +399,20 @@ build_python_for_abi ()
         echo "LOCAL_MODULE := $PYTHON_CORE_MODULE_NAME"
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
         echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include'
-        if [ "$PYTHON_MAJOR_VERSION" = "2" ]; then
-            echo "LOCAL_CFLAGS := -DPy_BUILD_CORE -DPy_ENABLE_SHARED -DPLATFORM=\\\"linux\\\""
-        else
-            echo "LOCAL_CFLAGS := -DSOABI=\\\"$PYTHON_SOABI\\\" -DPy_BUILD_CORE -DPy_ENABLE_SHARED -DPLATFORM=\\\"linux\\\""
-        fi
+        # Chaquopy: added `-std`: C99 is enabled by default in GCC 5 but requires this flag
+        # with GCC 4.9.
+        echo "LOCAL_CFLAGS := -std=gnu99 -DSOABI=\\\"$PYTHON_SOABI\\\" -DPy_BUILD_CORE -DPy_ENABLE_SHARED -DPLATFORM=\\\"linux\\\""
         echo 'LOCAL_LDLIBS := -lz'
         cat $PY_ANDROID_MK_TEMPLATE_FILE
         echo 'include $(BUILD_SHARED_LIBRARY)'
     } >$BUILDDIR_CORE/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_CORE/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_CORE -j$NUM_JOBS APP_ABI=$ABI V=1
+    # Chaquopy: added NDK_TOOLCHAIN_VERSION: default is 5, which doesn't match the environment
+    # variables passed to configure above.
+    ndk_build="$NDK_DIR/ndk-build NDK_TOOLCHAIN_VERSION=4.9"
+
+    run $ndk_build -C $BUILDDIR_CORE -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI core"
 
     if [ "$PYTHON_HEADERS_INSTALLED" != "yes" ]; then
@@ -462,7 +464,7 @@ build_python_for_abi ()
     } >$BUILDDIR_INTERPRETER/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_INTERPRETER/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_INTERPRETER -j$NUM_JOBS APP_ABI=$ABI V=1
+    run $ndk_build -C $BUILDDIR_INTERPRETER -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI interpreter"
 
     log "Install python$PYTHON_ABI-$ABI interpreter in $PYBIN_INSTALLDIR"
@@ -572,7 +574,7 @@ build_python_for_abi ()
     } >$BUILDDIR_CTYPES/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_CTYPES/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_CTYPES -j$NUM_JOBS APP_ABI=$ABI V=1
+    run $ndk_build -C $BUILDDIR_CTYPES -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI module '_ctypes'"
 
     log "Install python$PYTHON_ABI-$ABI module '_ctypes' in $PYBIN_INSTALLDIR_MODULES"
@@ -603,7 +605,7 @@ build_python_for_abi ()
     } >$BUILDDIR_MULTIPROCESSING/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_MULTIPROCESSING/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_MULTIPROCESSING -j$NUM_JOBS APP_ABI=$ABI V=1
+    run $ndk_build -C $BUILDDIR_MULTIPROCESSING -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI module '_multiprocessing'"
 
     log "Install python$PYTHON_ABI-$ABI module '_multiprocessing' in $PYBIN_INSTALLDIR_MODULES"
@@ -630,7 +632,7 @@ build_python_for_abi ()
     } >$BUILDDIR_SOCKET/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_SOCKET/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_SOCKET -j$NUM_JOBS APP_ABI=$ABI V=1
+    run $ndk_build -C $BUILDDIR_SOCKET -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI module '_socket'"
 
     log "Install python$PYTHON_ABI-$ABI module '_socket' in $PYBIN_INSTALLDIR_MODULES"
@@ -666,7 +668,7 @@ build_python_for_abi ()
             } >$BUILDDIR_SSL/jni/Android.mk
             fail_panic "Can't generate $BUILDDIR_SSL/jni/Android.mk"
 
-            run $NDK_DIR/ndk-build -C $BUILDDIR_SSL -j$NUM_JOBS APP_ABI=$ABI V=1
+            run $ndk_build -C $BUILDDIR_SSL -j$NUM_JOBS APP_ABI=$ABI V=1
             fail_panic "Can't build python$PYTHON_ABI-$ABI module '_${mod_name}'"
 
             log "Install python$PYTHON_ABI-$ABI module '_${mod_name}' in $PYBIN_INSTALLDIR_MODULES"
@@ -705,7 +707,7 @@ build_python_for_abi ()
     } >$BUILDDIR_SQLITE3/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_SQLITE3/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_SQLITE3 -j$NUM_JOBS APP_ABI=$ABI V=1
+    run $ndk_build -C $BUILDDIR_SQLITE3 -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI module '_sqlite3'"
 
     log "Install python$PYTHON_ABI-$ABI module '_sqlite3' in $PYBIN_INSTALLDIR_MODULES"
@@ -737,7 +739,7 @@ build_python_for_abi ()
     } >$BUILDDIR_PYEXPAT/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_PYEXPAT/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_PYEXPAT -j$NUM_JOBS APP_ABI=$ABI V=1
+    run $ndk_build -C $BUILDDIR_PYEXPAT -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI module 'pyexpat'"
 
     log "Install python$PYTHON_ABI-$ABI module 'pyexpat' in $PYBIN_INSTALLDIR_MODULES"
@@ -764,7 +766,7 @@ build_python_for_abi ()
     } >$BUILDDIR_SELECT/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_SELECT/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_SELECT -j$NUM_JOBS APP_ABI=$ABI V=1
+    run $ndk_build -C $BUILDDIR_SELECT -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI module 'select'"
 
     log "Install python$PYTHON_ABI-$ABI module 'select' in $PYBIN_INSTALLDIR_MODULES"
@@ -791,7 +793,7 @@ build_python_for_abi ()
     } >$BUILDDIR_UNICODEDATA/jni/Android.mk
     fail_panic "Can't generate $BUILDDIR_UNICODEDATA/jni/Android.mk"
 
-    run $NDK_DIR/ndk-build -C $BUILDDIR_UNICODEDATA -j$NUM_JOBS APP_ABI=$ABI V=1
+    run $ndk_build -C $BUILDDIR_UNICODEDATA -j$NUM_JOBS APP_ABI=$ABI V=1
     fail_panic "Can't build python$PYTHON_ABI-$ABI module 'unicodedata'"
 
     log "Install python$PYTHON_ABI-$ABI module 'unicodedata' in $PYBIN_INSTALLDIR_MODULES"
