@@ -65,8 +65,8 @@ PYTHON_VERSIONS="2.7 3.5"
 
 # Location of the OpenSSL libraries, relative to the NDK root directory
 OPENSSL_SUBDIR=sources/openssl
-OPENSSL_VERSIONS="1.0.2n"  # Chaquopy: updated
-DEFAULT_OPENSSL_VERSION=$(echo $OPENSSL_VERSIONS | tr ' ' '\n' | head -n 1)
+# Chaquopy: removed hard-coded version number: build-target-python.sh now detects the version
+# automatically.
 
 # Location of the libpng libraries, relative to the NDK root directory
 LIBPNG_SUBDIR=sources/libpng
