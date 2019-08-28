@@ -75,8 +75,9 @@ if [ ! -d "$OPENSSL_SRCDIR" ]; then
 fi
 
 OPENSSL_SRCDIR=$(cd $OPENSSL_SRCDIR && pwd)
+# Chaquopy: updated header path for current OpenSSL version.
 OPENSSL_SRC_VERSION=\
-$(cat $OPENSSL_SRCDIR/crypto/opensslv.h | sed -n 's/#[ \t]*define[ \t]*OPENSSL_VERSION_TEXT[ \t]*"OpenSSL[ \t]*\([A-Za-z0-9\.]*\)[A-Za-z0-9 \.]*"/\1/p')
+$(cat $OPENSSL_SRCDIR/include/openssl/opensslv.h | sed -n 's/#[ \t]*define[ \t]*OPENSSL_VERSION_TEXT[ \t]*"OpenSSL[ \t]*\([A-Za-z0-9\.]*\)[A-Za-z0-9 \.]*"/\1/p')
 
 if [ -z "$OPENSSL_SRC_VERSION" ]; then
     echo "ERROR: Can't detect OpenSSL version." 1>&2
@@ -317,6 +318,10 @@ build_openssl_for_abi ()
     esac
     local OPENSSL_OPTIONS='shared zlib-dynamic no-hw no-dso -DOPENSSL_NO_DEPRECATED'
 
+    # Chaquopy: prevent use of `getrandom`, because Crystax headers define SYS_getrandom to an
+    # undefined symbol (and it's not available until API 28 anyway).
+    OPENSSL_OPTIONS="$OPENSSL_OPTIONS --with-rand-seed=devrandom"
+
     # script for build
     local BUILD_WRAPPER=$BUILDDIR/build.sh
     {
@@ -326,11 +331,13 @@ build_openssl_for_abi ()
         echo 'cd $DIR_HERE'
         echo './mkobjtree.sh'
         echo 'cd objtree'
-        echo "perl ./Configure --openssldir=/system/etc/security --prefix=/pkg --cross-compile-prefix=\"${HOST}-\" $OPENSSL_OPTIONS $OPENSSL_TARGET"
+        # Chaquopy: now passing actual prefix to Configure. (Used to pass INSTALL_PREFIX
+        # variable to `make install` command, which no longer works.)
+        echo "perl ./Configure --prefix=$BUILDDIR/install/pkg --cross-compile-prefix=\"${HOST}-\" $OPENSSL_OPTIONS $OPENSSL_TARGET"
         echo "perl -p -i -e 's/^(#\\s*define\\s+ENGINESDIR\\s+).*$/\$1NULL/g' crypto/opensslconf.h"
         echo "perl -p -i -e 's/^(#\\s*define\\s+X509_CERT_DIR\\s+OPENSSLDIR\\s+).*$/\$1\"\\/cacerts\"/g' crypto/cryptlib.h"
-        echo 'make'
-        echo "make INSTALL_PREFIX=$BUILDDIR/install install"
+        echo "make -j $NUM_JOBS"
+        echo "make install"
     } >$BUILD_WRAPPER
     fail_panic "Can't create OpenSSL build wrapper"
     chmod +x $BUILD_WRAPPER
@@ -398,7 +405,7 @@ done
 # Chaquopy: added
 if [ $NDK_DIR != $ANDROID_NDK_ROOT ]; then
     log "Install Android.mk"
-    run cp -p $NDK_BUILDTOOLS_PATH/../../$OPENSSL_SUBDIR/$DEFAULT_OPENSSL_VERSION/Android.mk $OPENSSL_DSTDIR
+    run cp -p $NDK_BUILDTOOLS_PATH/../../$OPENSSL_SUBDIR/template/Android.mk $OPENSSL_DSTDIR
     fail_panic "Can't install Android.mk"
 fi
 

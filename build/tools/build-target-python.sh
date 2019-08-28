@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+
 # Copyright (c) 2011-2015 CrystaX.
 # All rights reserved.
 #
@@ -142,13 +142,20 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 fail_panic "Can't create build directory: $BUILD_DIR"
 
-OPENSSL_HOME=''
-if [ -n "$DEFAULT_OPENSSL_VERSION" ]; then
-    if [ -f "$NDK_DIR/$OPENSSL_SUBDIR/$DEFAULT_OPENSSL_VERSION/Android.mk" \
-         -a -f "$NDK_DIR/$OPENSSL_SUBDIR/$DEFAULT_OPENSSL_VERSION/include/openssl/opensslconf.h" ]; then
-        OPENSSL_HOME="openssl/$DEFAULT_OPENSSL_VERSION"
-    fi
-fi
+# Chaquopy: replaced OpenSSL detection code.
+all_versions=$(cd $NDK_DIR/$OPENSSL_SUBDIR && echo * | tr ' ' '\n' | grep -v "template")
+case $(echo $all_versions | wc -w) in
+0)
+    fail_panic "OpenSSL not found"
+    ;;
+1)
+    DEFAULT_OPENSSL_VERSION=$all_versions
+    OPENSSL_HOME="openssl/$DEFAULT_OPENSSL_VERSION"
+    ;;
+*)
+    fail_panic "Multiple OpenSSL versions found"
+    ;;
+esac
 
 # $1: ABI
 # $2: build directory
@@ -161,8 +168,7 @@ build_python_for_abi ()
     if [ -n "$OPENSSL_HOME" ]; then
         log "Building python$PYTHON_ABI for $ABI (with OpenSSL-$DEFAULT_OPENSSL_VERSION)"
     else
-        # Chaquopy: OpenSSL is required.
-        fail_panic "OpenSSL $DEFAULT_OPENSSL_VERSION not found"
+        log "Building python$PYTHON_ABI for $ABI (without OpenSSL support)"
     fi
 
 # Chaquopy added
@@ -639,7 +645,7 @@ build_python_for_abi ()
     run cp -p -T $OBJDIR_SOCKET/lib_socket.so $PYBIN_INSTALLDIR_MODULES/_socket.so
     fail_panic "Can't install python$PYTHON_ABI-$ABI module '_socket' in $PYBIN_INSTALLDIR_MODULES"
 
-#_hashlib and _ssl
+#_hashlib and _ssl (Chaquopy: added _hashlib)
     if [ -n "$OPENSSL_HOME" ]; then
         for mod_name in hashlib ssl; do
             local BUILDDIR_SSL="$BUILDDIR/${mod_name}"
